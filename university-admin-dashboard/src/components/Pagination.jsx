@@ -3,51 +3,67 @@ import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 const Pagination = ({ totalItems, itemsPerPage, currentPage, onPageChange, showingStart, showingEnd }) => {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
+  
+  // Logic to generate the array of page numbers
   const pageNumbers = [];
   for (let i = 1; i <= totalPages; i++) {
     pageNumbers.push(i);
   }
 
-  if (totalPages <= 1) return null;
-
   return (
-    <div className="flex items-center justify-between mt-6 text-textGray text-sm">
+    <div className="flex items-center justify-between text-textGray text-sm">
+      {/* Dynamic text based on current filtered results */}
       <div>
-        <span className='text-sm text-gray-500 font-medium'>
-          Showing <span className='text-gray-900 font-bold'>{showingStart}</span> to <span className='text-gray-900 font-bold'>{showingEnd}</span> of <span className='text-gray-900 font-bold'>{totalItems}</span> users
-        </span>
+        {totalItems > 0 ? (
+          <>
+            Showing <span className="font-bold text-textDark">{showingStart}</span> to{' '}
+            <span className="font-bold text-textDark">{showingEnd}</span> of{' '}
+            <span className="font-bold text-textDark">{totalItems}</span> users
+          </>
+        ) : (
+          "No users found matching the filters"
+        )}
       </div>
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          className="p-2 border rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed bg-white"
-        >
-          <FiChevronLeft size={18} />
-        </button>
 
-        {pageNumbers.map((number) => (
+      {/* Navigation Controls: Only show if there is more than 1 page */}
+      {totalPages > 1 && (
+        <div className="flex items-center gap-2">
+          {/* Previous Page Button */}
           <button
-            key={number}
-            onClick={() => onPageChange(number)}
-            className={`w-8 h-8 flex items-center justify-center rounded-md font-medium ${
-              currentPage === number
-                ? 'bg-primary text-white'
-                : 'border bg-white hover:bg-gray-100'
-            }`}
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="p-2 border rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed bg-white transition-colors"
           >
-            {number}
+            <FiChevronLeft size={18} />
           </button>
-        ))}
 
-        <button
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className="p-2 border rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed bg-white"
-        >
-          <FiChevronRight size={18} />
-        </button>
-      </div>
+          {/* Page Number Buttons */}
+          <div className="flex gap-1">
+            {pageNumbers.map((number) => (
+              <button
+                key={number}
+                onClick={() => onPageChange(number)}
+                className={`w-8 h-8 flex items-center justify-center rounded-md font-bold transition-all ${
+                  currentPage === number
+                    ? 'bg-primary text-white shadow-md'
+                    : 'border bg-white text-textGray hover:bg-gray-50'
+                }`}
+              >
+                {number}
+              </button>
+            ))}
+          </div>
+
+          {/* Next Page Button */}
+          <button
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="p-2 border rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed bg-white transition-colors"
+          >
+            <FiChevronRight size={18} />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
