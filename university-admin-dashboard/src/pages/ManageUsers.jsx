@@ -1,20 +1,21 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { FiSearch, FiFilter, FiEdit2, FiPlus } from 'react-icons/fi';
-import { MOCK_USERS } from '../data/mockData';
+import { FiSearch, FiEdit2 } from 'react-icons/fi';
+import axios from 'axios';
 import Pagination from '../components/Pagination';
 import UserEditModal from '../components/UserEditModal';
 
 const getRoleBadgeStyle = (role) => {
-  switch (role) {
-    case 'Admin': return 'bg-roleAdminBg text-roleAdminText';
-    case 'Employer': return 'bg-roleEmployerBg text-roleEmployerText';
-    case 'Student': return 'bg-roleStudentBg text-roleStudentText';
+  switch (role?.toLowerCase()) {
+    case 'admin': return 'bg-blue-100 text-blue-700 font-bold';
+    case 'moderator': return 'bg-purple-100 text-purple-700 font-bold';
+    case 'user': return 'bg-green-100 text-green-700 font-bold';
     default: return 'bg-gray-100 text-gray-800';
   }
 };
 
 const ManageUsers = () => {
-  const [users, setUsers] = useState(MOCK_USERS);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('All Roles');
   const [currentPage, setCurrentPage] = useState(1);
@@ -23,73 +24,106 @@ const ManageUsers = () => {
 
   const itemsPerPage = 4;
 
+  // 1. Function to fetch data from MongoDB
+  const fetchUsers = async (isInitialLoad = false) => {
+  try {
+    // Only show the big loading screen if it's the very first time
+    if (isInitialLoad) {
+      setLoading(true);
+    }
+    
+    const token = localStorage.getItem('token'); 
+    const response = await axios.get('http://localhost:5000/api/users', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    setUsers(response.data.list); 
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    alert("Session expired or Unauthorized. Please login again.");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+useEffect(() => {
+  fetchUsers(true); // Pass true here for the first time
+}, []);
+
+  
   const filteredUsers = useMemo(() => {
     return users.filter(user => {
-        const matchesSearch = 
-            user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-            user.email.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesRole = filterRole === 'All Roles' || user.role === filterRole;
-        return matchesSearch && matchesRole;
+      const name = user.userName || "";
+      const email = user.email || "";
+      const matchesSearch = 
+        name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        email.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesRole = filterRole === 'All Roles' || user.role === filterRole.toLowerCase();
+      return matchesSearch && matchesRole;
     });
   }, [users, searchTerm, filterRole]);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, filterRole]);
-
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentUsers = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
+  
+  const handleSaveRole = async (userName, newRole) => {
+  try {
+    const token = localStorage.getItem('token');
+    await axios.put(`http://localhost:5000/api/users/${userName}`, 
+      { role: newRole }, 
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    
+    
+    await fetchUsers(false); 
+    setIsEditModalOpen(false);
+  } catch (error) {
+    alert("Failed to update user role.");
+  }
+};
 
   const handleEditClick = (user) => {
     setUserToEdit(user);
     setIsEditModalOpen(true);
   };
 
-  const handleSaveRole = (userId, newRole) => {
-    setUsers(prevUsers => 
-      prevUsers.map(u => u.id === userId ? {...u, role: newRole} : u)
-    );
-  };
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentUsers = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
+
+  if (loading) return <div className="text-center p-20 font-bold">Loading Data from Database...</div>;
 
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-extrabold text-textDark">Manage Users</h1>
-        <button className="bg-primary text-white px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-600 transition-colors shadow-sm">
-          <FiPlus size={20} /> Add New User
-        </button>
+        {/* Add New User button removed as per your request */}
       </div>
 
       <div className="bg-white p-4 rounded-2xl shadow-sm mb-6">
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
           <div className="relative flex-1 w-full md:max-w-2xl">
-            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-textGray size={20}" />
+            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-textGray" size={20} />
             <input
               type="text"
-              placeholder="Search by name or email..."
-              className="w-full bg-gray-100 pl-12 pr-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+              placeholder="Search by username or email..."
+              className="w-full bg-gray-100 pl-12 pr-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-primary/50"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 
-          <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
-            <div className="flex bg-gray-100 p-1 rounded-xl overflow-hidden">
-              {['All Roles', 'Admin', 'Employer', 'Student'].map((role) => (
-                <button
-                  key={role}
-                  onClick={() => setFilterRole(role)}
-                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-                    filterRole === role
-                      ? 'bg-primary text-white shadow-sm'
-                      : 'text-textGray hover:bg-gray-200'
-                  }`}
-                >
-                  {role}
-                </button>
-              ))}
-            </div>
+          <div className="flex bg-gray-100 p-1 rounded-xl">
+            {['All Roles', 'Admin','Moderator','User'].map((role) => (
+              <button
+                key={role}
+                onClick={() => setFilterRole(role)}
+                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                  filterRole === role ? 'bg-primary text-white shadow-sm' : 'text-textGray'
+                }`}
+              >
+                {role}
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -98,64 +132,57 @@ const ManageUsers = () => {
         <table className="w-full text-left border-collapse">
           <thead className="bg-gray-50 border-b border-gray-100">
             <tr>
-              <th className="p-6 text-xs font-bold tracking-wider text-textGray uppercase w-12">
-                <input type="checkbox" className="rounded text-primary focus:ring-primary" />
-              </th>
-              <th className="p-6 text-xs font-bold tracking-wider text-textGray uppercase">User Name</th>
-              <th className="p-6 text-xs font-bold tracking-wider text-textGray uppercase">Email</th>
-              <th className="p-6 text-xs font-bold tracking-wider text-textGray uppercase">Role</th>
-              <th className="p-6 text-xs font-bold tracking-wider text-textGray uppercase">Date Registered</th>
-              <th className="p-6 text-xs font-bold tracking-wider text-textGray uppercase text-center">Edit</th>
+              <th className="p-6 text-xs font-bold text-textGray uppercase">User Name</th>
+              <th className="p-6 text-xs font-bold text-textGray uppercase">Email</th>
+              <th className="p-6 text-xs font-bold text-textGray uppercase">Role</th>
+              <th className="p-6 text-xs font-bold text-textGray uppercase">Date Registered</th>
+              <th className="p-6 text-xs font-bold text-textGray uppercase text-center">Edit</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {currentUsers.length > 0 ? (
-                currentUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="p-6"><input type="checkbox" className="rounded text-primary focus:ring-primary" /></td>
-                    <td className="p-6 font-bold text-textDark">{user.name}</td>
-                    <td className="p-6 text-textGray font-medium">{user.email}</td>
-                    <td className="p-6">
-                    <span className={`px-4 py-1.5 rounded-full text-xs font-extrabold capitalize ${getRoleBadgeStyle(user.role)}`}>
-                        {user.role}
-                    </span>
-                    </td>
-                    <td className="p-6 text-textGray font-medium">{user.date}</td>
-                    <td className="p-6 text-center">
-                        <button 
-                            onClick={() => handleEditClick(user)}
-                            className="text-textGray hover:text-primary transition-colors p-2 bg-gray-50 rounded-lg" 
-                            title="Edit User Role"
-                        >
-                            <FiEdit2 size={18} />
-                        </button>
-                    </td>
-                </tr>
-                ))
-            ) : (
-                <tr>
-                    <td colSpan="6" className="p-8 text-center text-textGray">No users found.</td>
-                </tr>
-            )}
+            {currentUsers.map((user) => (
+              <tr key={user._id} className="hover:bg-gray-50 transition-colors">
+                <td className="p-6 font-bold text-textDark">{user.userName}</td>
+                <td className="p-6 text-textGray font-medium">{user.email}</td>
+                <td className="p-6">
+                  <span className={`px-4 py-1.5 rounded-full text-xs uppercase ${getRoleBadgeStyle(user.role)}`}>
+                    {user.role}
+                  </span>
+                </td>
+                <td className="p-6 text-textGray font-medium">
+                  {new Date(user.date).toLocaleDateString()}
+                </td>
+                <td className="p-6 text-center">
+                  <button 
+                    onClick={() => handleEditClick(user)}
+                    className="text-textGray hover:text-primary transition-colors p-2 bg-gray-50 rounded-lg"
+                  >
+                    <FiEdit2 size={18} />
+                  </button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
 
-      <Pagination 
-        totalItems={filteredUsers.length}
-        itemsPerPage={itemsPerPage}
-        currentPage={currentPage}
-        onPageChange={setCurrentPage}
-        showingStart={filteredUsers.length === 0 ? 0 : indexOfFirstItem + 1}
-        showingEnd={Math.min(indexOfLastItem, filteredUsers.length)}
-      />
+      <div className="fixed bottom-0 right-0 left-64 bg-gray-50 p-6 border-t border-gray-200">
+        <Pagination 
+          totalItems={filteredUsers.length}
+          itemsPerPage={itemsPerPage}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+          showingStart={filteredUsers.length === 0 ? 0 : indexOfFirstItem + 1}
+          showingEnd={Math.min(indexOfLastItem, filteredUsers.length)}
+        />
+      </div>
 
-       <UserEditModal 
-         isOpen={isEditModalOpen}
-         onClose={() => setIsEditModalOpen(false)}
-         user={userToEdit}
-         onSave={handleSaveRole}
-       />
+      <UserEditModal 
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        user={userToEdit}
+        onSave={handleSaveRole}
+      />
     </div>
   );
 };

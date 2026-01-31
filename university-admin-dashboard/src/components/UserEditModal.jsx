@@ -4,6 +4,7 @@ import { FiX } from 'react-icons/fi';
 const UserEditModal = ({ isOpen, onClose, user, onSave }) => {
   const [selectedRole, setSelectedRole] = useState('');
 
+  // Sync state with the user object when it changes
   useEffect(() => {
     if (user) {
       setSelectedRole(user.role);
@@ -14,13 +15,14 @@ const UserEditModal = ({ isOpen, onClose, user, onSave }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(user.id, selectedRole);
+    onSave(user.userName, selectedRole);
     onClose();
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl w-96 max-w-full mx-4">
+        {/* Modal Header */}
         <div className="flex justify-between items-center p-4 border-b">
           <h3 className="text-lg font-bold text-textDark">Edit User Role</h3>
           <button onClick={onClose} className="text-textGray hover:text-textDark">
@@ -29,18 +31,23 @@ const UserEditModal = ({ isOpen, onClose, user, onSave }) => {
         </div>
         
         <form onSubmit={handleSubmit} className="p-6">
-          <p className="mb-4 text-textGray">Changing role for <span className="font-semibold text-textDark">{user.name}</span></p>
+          <p className="mb-4 text-textGray text-sm">
+            Changing role for: <br/>
+            <span className="font-bold text-textDark text-base">{user.userName}</span> 
+            <span className="block text-xs text-textGray">({user.email})</span>
+          </p>
           
           <div className="mb-6">
             <label className="block text-sm font-bold mb-2 text-textGray">Select Role</label>
             <select 
               value={selectedRole}
               onChange={(e) => setSelectedRole(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-gray-50 font-medium"
             >
-              <option value="Student">Student</option>
-              <option value="Employer">Employer</option>
-              <option value="Admin">Admin</option>
+              {/* Using lowercase to match standard DB values, or Admin/Employer as you prefer */}
+              <option value="user">User</option>
+              <option value="moderator">Moderator</option>
+              <option value="admin">Admin</option>
             </select>
           </div>
 
@@ -54,7 +61,7 @@ const UserEditModal = ({ isOpen, onClose, user, onSave }) => {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-primary text-white rounded-md font-medium hover:bg-blue-600 transition-colors"
+              className="px-4 py-2 bg-primary text-white rounded-md font-medium hover:bg-blue-600 transition-colors shadow-sm"
             >
               Save Changes
             </button>
