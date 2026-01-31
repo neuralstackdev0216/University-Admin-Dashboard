@@ -4,7 +4,6 @@ import { FiX } from 'react-icons/fi';
 const UserEditModal = ({ isOpen, onClose, user, onSave }) => {
   const [selectedRole, setSelectedRole] = useState('');
 
-  // Sync state with the user object when it changes
   useEffect(() => {
     if (user) {
       setSelectedRole(user.role);

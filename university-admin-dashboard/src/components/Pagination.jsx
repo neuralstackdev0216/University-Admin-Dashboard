@@ -13,7 +13,9 @@ const Pagination = ({ totalItems, itemsPerPage, currentPage, onPageChange, showi
   return (
     <div className="flex items-center justify-between mt-6 text-textGray text-sm">
       <div>
-        Showing {showingStart} to {showingEnd} of {totalItems} users
+        <span className='text-sm text-gray-500 font-medium'>
+          Showing <span className='text-gray-900 font-bold'>{showingStart}</span> to <span className='text-gray-900 font-bold'>{showingEnd}</span> of <span className='text-gray-900 font-bold'>{totalItems}</span> users
+        </span>
       </div>
       <div className="flex items-center gap-2">
         <button

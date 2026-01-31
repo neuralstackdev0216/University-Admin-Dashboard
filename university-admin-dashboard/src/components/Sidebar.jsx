@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { FiUsers, FiBriefcase } from 'react-icons/fi';
-// This import will only work if the file exists in src/assets/
 import avatarImg from '../assets/admin-avatar.jpg';
 
 const SidebarItem = ({ to, icon: Icon, label, isActive }) => {
@@ -33,7 +32,7 @@ const Sidebar = () => {
             alt="Admin"
             className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 hover:border-primary cursor-pointer transition-all"
             onError={(e) => {
-              // Fallback if the image import fails or is broken
+              
               e.target.src = "https://ui-avatars.com/api/?name=Admin";
             }}
           />

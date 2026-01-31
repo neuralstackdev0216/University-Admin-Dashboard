@@ -24,10 +24,10 @@ const ManageUsers = () => {
 
   const itemsPerPage = 4;
 
-  // 1. Function to fetch data from MongoDB
+  
   const fetchUsers = async (isInitialLoad = false) => {
   try {
-    // Only show the big loading screen if it's the very first time
+    
     if (isInitialLoad) {
       setLoading(true);
     }
@@ -48,7 +48,7 @@ const ManageUsers = () => {
 
 
 useEffect(() => {
-  fetchUsers(true); // Pass true here for the first time
+  fetchUsers(true);
 }, []);
 
   

@@ -1,27 +1,26 @@
 import React, { useState, useRef } from 'react';
 import { FiCamera, FiSave, FiLogOut, FiUser, FiMail } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
-// Importing the initial image
 import initialAvatar from '../assets/admin-avatar.jpg';
 
 const Profile = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
-  // 1. State for Admin Details
+  
   const [adminData, setAdminData] = useState({
     name: 'Dilshan0216',
     email: 'vadiveldilshan@gmail.com',
     profilePic: initialAvatar
   });
 
-  // 2. Handle Input Changes
+  
   const handleChange = (e) => {
     const { name, value } = e.target;
     setAdminData(prev => ({ ...prev, [name]: value }));
   };
 
-  // 3. Handle Profile Picture Upload (Preview only for now)
+  
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -35,15 +34,15 @@ const Profile = () => {
 
   const handleSave = (e) => {
     e.preventDefault();
-    // Later, you will send adminData to SpringBoot here
+    
     alert("Profile Updated Successfully!");
   };
 
   const handleLogout = () => {
     if(window.confirm("Are you sure you want to logout?")) {
-        // Clear auth logic here later
+        
         alert("Logging out...");
-        navigate('/'); // Redirect to home/login
+        navigate('/'); 
     }
   };
 
