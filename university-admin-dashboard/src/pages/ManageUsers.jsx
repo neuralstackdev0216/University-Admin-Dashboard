@@ -4,6 +4,7 @@ import axios from 'axios';
 import Pagination from '../components/Pagination';
 import UserEditModal from '../components/UserEditModal';
 import UserDetailsModal from '../components/UserDetailsModal';
+import { jwtDecode } from "jwt-decode";
 
 const getRoleBadgeStyle = (role) => {
   switch (role?.toLowerCase()) {
@@ -21,7 +22,6 @@ const ManageUsers = () => {
   const [filterRole, setFilterRole] = useState('All Roles');
   const [currentPage, setCurrentPage] = useState(1);
   
-  // Modal States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [userToEdit, setUserToEdit] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false); 
@@ -33,10 +33,15 @@ const ManageUsers = () => {
     try {
       if (isInitialLoad) setLoading(true);
       const token = localStorage.getItem('token'); 
+      const decoded = jwtDecode(token);
+      const currentAdminEmail = decoded.email;
+
       const response = await axios.get('http://localhost:5000/api/users', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setUsers(response.data.list); 
+      
+      const otherUsers = response.data.list.filter(user => user.email !== currentAdminEmail);
+      setUsers(otherUsers); 
     } catch (error) {
       console.error("Error fetching users:", error);
     } finally {
@@ -78,16 +83,14 @@ const ManageUsers = () => {
     }
   };
 
-  // NEW UPDATION: Handler for blocking/unblocking user via PUT
   const handleToggleBlock = async (e, userName) => {
-    e.stopPropagation(); // Stops the row-click (View Details) from firing
+    e.stopPropagation();
     try {
       const token = localStorage.getItem('token');
-      // Using .put as you requested for toggle-block
       await axios.put(`http://localhost:5000/api/users/toggle-block/${userName}`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      fetchUsers(false); // Silent refresh of the table
+      fetchUsers(false);
     } catch (error) {
       console.error(error);
       alert("Failed to update block status.");
@@ -100,7 +103,7 @@ const ManageUsers = () => {
   };
 
   const handleEditClick = (e, user) => {
-    e.stopPropagation(); // Stops the row-click (View Details) from firing
+    e.stopPropagation();
     setUserToEdit(user);
     setIsEditModalOpen(true);
   };
@@ -117,7 +120,6 @@ const ManageUsers = () => {
         <h1 className="text-3xl font-extrabold text-textDark">Manage Users</h1>
       </div>
 
-      {/* Filter Header */}
       <div className="bg-white p-4 rounded-2xl shadow-sm mb-6">
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
           <div className="relative flex-1 w-full md:max-w-2xl">
@@ -147,7 +149,6 @@ const ManageUsers = () => {
         </div>
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead className="bg-gray-50 border-b border-gray-100">
@@ -155,6 +156,8 @@ const ManageUsers = () => {
               <th className="p-6 text-xs font-bold text-textGray uppercase">User Name</th>
               <th className="p-6 text-xs font-bold text-textGray uppercase">Email</th>
               <th className="p-6 text-xs font-bold text-textGray uppercase">Role</th>
+              {/* UPDATED: Added Date Registered header */}
+              <th className="p-6 text-xs font-bold text-textGray uppercase">Date Registered</th>
               <th className="p-6 text-xs font-bold text-textGray uppercase text-center">Actions</th>
             </tr>
           </thead>
@@ -172,7 +175,10 @@ const ManageUsers = () => {
                     {user.role}
                   </span>
                 </td>
-                {/* NEW UPDATION: Flex container for Edit and Block buttons with e.stopPropagation() */}
+                {/* UPDATED: Added Date Registered cell using toLocaleDateString() */}
+                <td className="p-6 text-textGray font-medium">
+                  {user.date ? new Date(user.date).toLocaleDateString() : 'N/A'}
+                </td>
                 <td className="p-6 text-center">
                    <div className="flex justify-center gap-2">
                       <button 
@@ -203,7 +209,6 @@ const ManageUsers = () => {
         </table>
       </div>
 
-      {/* Pagination */}
       <div className="fixed bottom-0 right-0 left-64 bg-gray-50 p-6 border-t border-gray-200 z-40">
         <Pagination 
           totalItems={filteredUsers.length}
