@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Layout from './components/Layout';
 import ManageUsers from './pages/ManageUsers';
 import ManageVacancies from './pages/ManageVacancies';
-import Profile from './pages/Profile';
+import Profile from './pages/AdminProfile';
 
 function App() {
   return (
