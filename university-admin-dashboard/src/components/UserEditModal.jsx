@@ -45,7 +45,7 @@ const UserEditModal = ({ isOpen, onClose, user, onSave }) => {
             >
               {/* Using lowercase to match standard DB values, or Admin/Employer as you prefer */}
               <option value="user">User</option>
-              <option value="moderator">Moderator</option>
+              <option value="madam">Moderator</option>
               <option value="admin">Admin</option>
             </select>
           </div>

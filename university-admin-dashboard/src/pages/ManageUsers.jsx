@@ -7,9 +7,10 @@ import UserDetailsModal from '../components/UserDetailsModal';
 import { jwtDecode } from "jwt-decode";
 
 const getRoleBadgeStyle = (role) => {
+  // Mapping 'madam' to 'moderator' styles for the UI
   switch (role?.toLowerCase()) {
     case 'admin': return 'bg-blue-100 text-blue-700 font-bold';
-    case 'moderator': return 'bg-purple-100 text-purple-700 font-bold';
+    case 'madam': return 'bg-purple-100 text-purple-700 font-bold';
     case 'user': return 'bg-green-100 text-green-700 font-bold';
     default: return 'bg-gray-100 text-gray-800';
   }
@@ -40,7 +41,10 @@ const ManageUsers = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      const otherUsers = response.data.list.filter(user => user.email !== currentAdminEmail);
+      // NEW UPDATION: Backend 'getAllUsers' now returns a direct array
+      const data = Array.isArray(response.data) ? response.data : [];
+      
+      const otherUsers = data.filter(user => user.email !== currentAdminEmail);
       setUsers(otherUsers); 
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -60,7 +64,9 @@ const ManageUsers = () => {
       const matchesSearch = 
         name.toLowerCase().includes(searchTerm.toLowerCase()) || 
         email.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesRole = filterRole === 'All Roles' || user.role === filterRole.toLowerCase();
+      
+      const targetRole = filterRole === 'Moderator' ? 'madam' : filterRole.toLowerCase();
+      const matchesRole = filterRole === 'All Roles' || user.role === targetRole;
       return matchesSearch && matchesRole;
     });
   }, [users, searchTerm, filterRole]);
@@ -72,8 +78,11 @@ const ManageUsers = () => {
   const handleSaveRole = async (userName, newRole) => {
     try {
       const token = localStorage.getItem('token');
+      // UI uses 'Moderator', Backend requires 'madam'
+      const roleToSend = newRole === 'Moderator' ? 'madam' : newRole;
+
       await axios.put(`http://localhost:5000/api/users/${userName}`, 
-        { role: newRole }, 
+        { role: roleToSend }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
       await fetchUsers(false); 
@@ -92,7 +101,6 @@ const ManageUsers = () => {
       });
       fetchUsers(false);
     } catch (error) {
-      console.error(error);
       alert("Failed to update block status.");
     }
   };
@@ -156,7 +164,6 @@ const ManageUsers = () => {
               <th className="p-6 text-xs font-bold text-textGray uppercase">User Name</th>
               <th className="p-6 text-xs font-bold text-textGray uppercase">Email</th>
               <th className="p-6 text-xs font-bold text-textGray uppercase">Role</th>
-              {/* UPDATED: Added Date Registered header */}
               <th className="p-6 text-xs font-bold text-textGray uppercase">Date Registered</th>
               <th className="p-6 text-xs font-bold text-textGray uppercase text-center">Actions</th>
             </tr>
@@ -172,10 +179,9 @@ const ManageUsers = () => {
                 <td className="p-6 text-textGray font-medium">{user.email}</td>
                 <td className="p-6">
                   <span className={`px-4 py-1.5 rounded-full text-xs uppercase ${getRoleBadgeStyle(user.role)}`}>
-                    {user.role}
+                    {user.role === 'madam' ? 'Moderator' : user.role}
                   </span>
                 </td>
-                {/* UPDATED: Added Date Registered cell using toLocaleDateString() */}
                 <td className="p-6 text-textGray font-medium">
                   {user.date ? new Date(user.date).toLocaleDateString() : 'N/A'}
                 </td>
@@ -184,7 +190,6 @@ const ManageUsers = () => {
                       <button 
                         onClick={(e) => handleEditClick(e, user)} 
                         className="text-textGray hover:text-primary transition-colors p-2 bg-gray-50 rounded-lg relative z-10"
-                        title="Edit Role"
                       >
                         <FiEdit2 size={18} />
                       </button>
@@ -196,7 +201,6 @@ const ManageUsers = () => {
                             ? 'bg-red-50 text-red-600 hover:bg-red-100' 
                             : 'bg-green-50 text-green-600 hover:bg-green-100'
                         } relative z-10`}
-                        title={user.isBlocked ? "Unblock User" : "Block User"}
                       >
                         {user.isBlocked ? <FiUnlock size={14} /> : <FiLock size={14} />}
                         {user.isBlocked ? "Unblock" : "Block"}
